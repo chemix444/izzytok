@@ -249,7 +249,11 @@ def build_entry(vid, listed, detail, prior, username, args, log):
     else:
         state = refresh_file(cover_url, dest, False)
         if state == "updated":
-            log.append(f"  ~ cover    {vid}")
+            log.append(f"  ~ cover    {vid} changed")
+        elif state == "added" and prior:
+            # a video we already knew about whose file had gone missing — worth
+            # saying, where a brand new video's first download isn't
+            log.append(f"  ~ cover    {vid} restored")
         elif state == "failed" and not dest.exists():
             thumb = None
 
@@ -270,6 +274,8 @@ def build_entry(vid, listed, detail, prior, username, args, log):
             state = refresh_file(play_url, dest, False)
             if state == "updated":
                 log.append(f"  ~ clip     {vid} redownloaded (previous copy was damaged)")
+            elif state == "added" and prior:
+                log.append(f"  ~ clip     {vid} restored")
             elif state == "failed" and not dest.exists():
                 clip = None
 
