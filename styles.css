@@ -191,7 +191,7 @@ main {
 .feed::-webkit-scrollbar { display: none; }
 
 .card {
-  height: 100vh;
+  min-height: 100vh;
   scroll-snap-align: center;
   display: flex;
   align-items: center;
@@ -200,59 +200,38 @@ main {
   padding: 20px;
 }
 
-/* taller than 9:16 on purpose — TikTok's embed adds its own header and
-   caption bar above and below the video, and crops if it's given less */
+/* embed.js decides the player's height and talks to the iframe to resize it,
+   so this container only fixes the width and otherwise gets out of the way —
+   no fixed height, and no overflow clipping that would crop the controls */
 .player {
   position: relative;
   width: var(--card-w);
   flex: 0 0 var(--card-w);
-  height: min(calc(100vh - 40px), 740px);
+  min-width: 325px;
+}
+
+.player .tiktok-embed {
+  margin: 0;
   border-radius: 14px;
   overflow: hidden;
   background: #000;
   box-shadow: 0 22px 60px #000000a6;
 }
 
-.player iframe {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  border: 0;
+/* what the blockquote looks like in the gap before embed.js replaces it */
+.player .tiktok-embed > section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  justify-content: flex-end;
+  min-height: 480px;
+  padding: 18px;
+  color: var(--muted);
+  font-size: 14px;
 }
+.player .tiktok-embed > section a { font-weight: 700; }
 
-/* poster stands in until the card scrolls close enough to mount the embed */
-.poster {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  padding: 0;
-  border: 0;
-  background: #000;
-  cursor: pointer;
-  color: #fff;
-}
-.poster img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  opacity: .62;
-}
-.poster::after {
-  content: "";
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 62px;
-  height: 62px;
-  transform: translate(-50%, -50%);
-  border-radius: 50%;
-  background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M8 5.5v13l11-6.5z' fill='%230b0b10'/%3E%3C/svg%3E") center / 34px no-repeat;
-  box-shadow: 0 6px 24px #000000a6;
-  transition: transform .18s;
-}
-.poster:hover::after { transform: translate(-50%, -50%) scale(1.09); }
+.player iframe { border: 0; }
 
 /* ---------- caption rail beside the player ---------- */
 
@@ -454,12 +433,12 @@ main {
   .feed { height: auto; scroll-snap-type: none; }
 
   .card {
-    height: auto;
+    min-height: 0;
     flex-direction: column;
     gap: 14px;
     padding: 22px 16px;
   }
-  .player { width: min(100%, 340px); flex: none; height: 740px; }
+  .player { width: min(100%, 340px); flex: none; }
   .meta { width: min(100%, 340px); align-self: center; padding-bottom: 0; }
 
   .hint, .counter { display: none; }

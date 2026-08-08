@@ -1,12 +1,17 @@
 /* izzytok — a single-creator TikTok frontend.
  *
  * Everything on screen comes from data/videos.json, which tools/refresh.py
- * builds from one account's public embed feed. Playback is handed to TikTok's
- * official embed iframe; we only mount that iframe once a card is actually
- * near the viewport, so opening the page costs four thumbnails instead of four
- * video players. */
+ * builds from one account's public embed feed.
+ *
+ * Playback uses TikTok's supported embed: we render <blockquote class=
+ * "tiktok-embed"> elements and then load tiktok.com/embed.js, which swaps each
+ * one for a real player. That script only scans the document when it loads and
+ * has no observer for blockquotes added later, so the script tag is appended
+ * *after* the feed is in the DOM — and the players all mount at once rather
+ * than lazily. With four videos that's a fine trade for using the documented
+ * path; if this ever grows to dozens, laziness has to come back. */
 
-const EMBED = 'https://www.tiktok.com/embed/v2/';
+const EMBED_SCRIPT = 'https://www.tiktok.com/embed.js';
 
 const el = {
   feed: document.getElementById('feed'),
@@ -16,6 +21,8 @@ const el = {
 };
 
 let videos = [];
+let current = 0;
+let cards = [];
 
 const compact = new Intl.NumberFormat('en', { notation: 'compact' });
 
@@ -45,7 +52,6 @@ function thumbTag(video) {
 
 function renderProfile(data) {
   const handle = `@${data.username}`;
-  const link = `https://www.tiktok.com/${handle}`;
 
   document.title = `izzytok — ${handle}`;
 
@@ -58,7 +64,7 @@ function renderProfile(data) {
   document.getElementById('bio').textContent = data.bio;
 
   const follow = document.getElementById('follow');
-  follow.href = link;
+  follow.href = `https://www.tiktok.com/${handle}`;
   follow.textContent = `Follow ${handle}`;
 
   const stats = [
@@ -74,14 +80,25 @@ function renderProfile(data) {
 
 /* ---------- feed ---------- */
 
+/* The blockquote shape matters — embed.js looks for the class, reads
+   data-video-id, and uses the <section> as the placeholder it replaces. */
+function embedTag(video, username) {
+  return `
+    <blockquote class="tiktok-embed" cite="${esc(video.url)}"
+                data-video-id="${esc(video.id)}"
+                style="max-width:605px; min-width:325px;">
+      <section>
+        <a target="_blank" rel="noopener" title="@${esc(username)}"
+           href="https://www.tiktok.com/@${esc(username)}?refer=embed">@${esc(username)}</a>
+        <p>${esc(caption(video.desc))}</p>
+      </section>
+    </blockquote>`;
+}
+
 function renderFeed(data) {
   el.feed.innerHTML = videos.map((video, i) => `
     <article class="card" id="v${esc(video.id)}" data-index="${i}">
-      <div class="player">
-        <button class="poster" type="button" aria-label="Play video ${i + 1}: ${esc(caption(video.desc))}">
-          ${thumbTag(video)}
-        </button>
-      </div>
+      <div class="player">${embedTag(video, data.username)}</div>
       <div class="meta">
         <a class="who" href="https://www.tiktok.com/@${esc(data.username)}" target="_blank" rel="noopener">@${esc(data.username)}</a>
         <p class="desc">${esc(caption(video.desc))}</p>
@@ -98,23 +115,13 @@ function renderFeed(data) {
   `).join('') + `<p class="counter" id="counter"></p>`;
 }
 
-/** Swap a poster for the real embed. Idempotent. */
-function mount(card) {
-  const shell = card.querySelector('.player');
-  if (shell.dataset.mounted) return;
-  shell.dataset.mounted = '1';
-
-  const id = card.id.slice(1);
-  const frame = document.createElement('iframe');
-  frame.src = `${EMBED}${encodeURIComponent(id)}`;
-  frame.title = 'TikTok video player';
-  frame.loading = 'lazy';
-  frame.allow = 'encrypted-media; fullscreen; picture-in-picture';
-  frame.allowFullscreen = true;
-  shell.append(frame);
-
-  // keep the poster underneath so there's no white flash while the embed boots
-  setTimeout(() => shell.querySelector('.poster')?.remove(), 1500);
+/** Load embed.js once, after the blockquotes exist for it to find. */
+function loadEmbedScript() {
+  if (document.querySelector(`script[src="${EMBED_SCRIPT}"]`)) return;
+  const script = document.createElement('script');
+  script.src = EMBED_SCRIPT;
+  script.async = true;
+  document.body.append(script);
 }
 
 /* ---------- grid ---------- */
@@ -146,16 +153,10 @@ function show(view) {
 function jumpTo(index) {
   show('feed');
   const card = el.feed.querySelector(`[data-index="${index}"]`);
-  if (!card) return;
-  mount(card);
-  card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  card?.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
 /* ---------- boot ---------- */
-
-let current = 0;
-let cards = [];
-let feedObserver;
 
 async function init() {
   let data;
@@ -180,20 +181,15 @@ async function init() {
 
   renderFeed(data);
   renderGrid();
-  cards = [...el.feed.querySelectorAll('.card')];
+  loadEmbedScript();
 
+  cards = [...el.feed.querySelectorAll('.card')];
   const counter = document.getElementById('counter');
   counter.textContent = `1 / ${cards.length}`;
 
   // On desktop the feed is its own scroll container; on narrow screens it grows
-  // with the page and the viewport does the scrolling. Watching the wrong one
-  // reports every card as visible, which would mount all four players at once.
+  // with the page and the viewport does the scrolling.
   const root = el.feed.scrollHeight > el.feed.clientHeight + 8 ? el.feed : null;
-
-  // mount one screen ahead, so the next card is warm before you reach it
-  feedObserver = new IntersectionObserver((entries) => {
-    entries.forEach((e) => e.isIntersecting && mount(e.target));
-  }, { root, rootMargin: '60% 0px' });
 
   const activeObserver = new IntersectionObserver((entries) => {
     entries.forEach((e) => {
@@ -203,22 +199,13 @@ async function init() {
     });
   }, { root, threshold: 0.6 });
 
-  cards.forEach((c) => {
-    feedObserver.observe(c);
-    activeObserver.observe(c);
-  });
-
-  // the first card is what you land on, so give it a player straight away
-  mount(cards[0]);
+  cards.forEach((c) => activeObserver.observe(c));
 
   setTimeout(() => el.hint.classList.add('is-gone'), 6000);
 }
 
-/* clicks: posters, grid tiles, nav, share */
+/* clicks: grid tiles, nav, share */
 document.addEventListener('click', (e) => {
-  const poster = e.target.closest('.poster');
-  if (poster) return mount(poster.closest('.card'));
-
   const tile = e.target.closest('.tile');
   if (tile) return jumpTo(Number(tile.dataset.index));
 
@@ -234,7 +221,7 @@ document.addEventListener('click', (e) => {
   }
 });
 
-/* grid tiles are divs, so give them the button keys */
+/* grid tiles are figures, so give them the button keys */
 el.grid.addEventListener('keydown', (e) => {
   const tile = e.target.closest('.tile');
   if (tile && (e.key === 'Enter' || e.key === ' ')) {
@@ -248,10 +235,10 @@ document.addEventListener('keydown', (e) => {
   if (el.feed.hidden || e.metaKey || e.ctrlKey || e.altKey) return;
   if (/^(INPUT|TEXTAREA)$/.test(document.activeElement?.tagName)) return;
 
-  const next = { ArrowDown: 1, j: 1, ArrowUp: -1, k: -1 }[e.key];
-  if (!next) return;
+  const step = { ArrowDown: 1, j: 1, ArrowUp: -1, k: -1 }[e.key];
+  if (!step) return;
 
-  const target = current + next;
+  const target = current + step;
   if (target < 0 || target >= cards.length) return;
   e.preventDefault();
   jumpTo(target);

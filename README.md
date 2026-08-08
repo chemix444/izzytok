@@ -18,14 +18,30 @@ time**:
 2. It writes `data/videos.json` and downloads every cover image into
    `assets/thumbs/`.
 3. The page fetches that JSON and renders the UI.
-4. Playback is handed to TikTok's official embed iframe
-   (`tiktok.com/embed/v2/<id>`), mounted lazily as you scroll.
+4. Playback goes through TikTok's supported embed: the feed renders
+   `<blockquote class="tiktok-embed">` elements and then loads
+   `tiktok.com/embed.js`, which swaps each one for a real player.
 
 Covers are **downloaded rather than hotlinked** on purpose: TikTok's CDN URLs
 are signed and expire about a day after they're issued, so linking to them
 directly would leave the site full of broken thumbnails by tomorrow. Nothing is
 rehosted except the still images — the videos themselves always play from
 TikTok, so views and attribution stay with the creator.
+
+### Two things to know about the embed
+
+`embed.js` only scans the document at load time and has no observer for
+blockquotes added afterwards, so the script tag is appended *after* the feed is
+in the DOM. That also means every player mounts at once instead of lazily —
+fine for four videos, but laziness has to come back if this grows.
+
+More importantly, the player sets `ttwid` as a **third-party cookie**
+(`SameSite=None`). Safari on iOS blocks those outright, and Firefox partitions
+them under Total Cookie Protection, which can leave the player visible but
+unable to start the video. That's inside TikTok's player and can't be fixed
+from this side. Every card carries an **Open on TikTok** link for exactly that
+case; if in-page playback in those browsers matters more than keeping views on
+TikTok, the alternative is self-hosting the MP4s in a `<video>` element.
 
 ## Refreshing
 
