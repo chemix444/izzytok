@@ -15,10 +15,13 @@ time**:
 
 1. `tools/refresh.py` reads TikTok's public creator-embed page for the account
    and pulls the video list out of it (id, description, play count, cover).
-2. It downloads every cover into `assets/thumbs/` and every video into
+2. It opens each video's own page for the things the feed doesn't carry — likes,
+   comments, shares, saves, posted date, duration, music — and for a straight
+   answer on whether the video is still public.
+3. It downloads every cover into `assets/thumbs/` and every video into
    `assets/video/<id>.mp4`.
-3. It writes the catalogue to `data/videos.json`.
-4. The page fetches that JSON, renders the UI, and plays the clips in plain
+4. It writes the catalogue to `data/videos.json`.
+5. The page fetches that JSON, renders the UI, and plays the clips in plain
    `<video>` elements.
 
 Nothing is hotlinked, because TikTok's CDN URLs are signed and expire about a
@@ -48,13 +51,19 @@ else.
 ## Refreshing
 
 `refresh.py` reconciles the whole site with the account's current public state,
-in both directions:
+in both directions. Everything reachable is re-read on every run:
 
 * new videos are downloaded, along with their covers
-* captions, hashtags and play counts are rewritten
-* the avatar, nickname, bio, follower and like counts are refreshed
-* videos that were deleted or made private are dropped from the catalogue **and
-  their files are deleted from the repo**
+* captions, hashtags, mentions, music, duration and posted date are rewritten
+* plays, likes, comments, shares and saves are re-read per video
+* covers and the avatar are refetched and rewritten only if the bytes changed
+* clips already in the repo are checked against the size TikTok reports, and a
+  copy that's empty, truncated or not an MP4 is downloaded again
+* the nickname, bio, verified flag, follower, following and like counts are
+  refreshed
+* videos that were deleted, made private, restricted to friends, taken down or
+  put under review are dropped from the catalogue **and their files are deleted
+  from the repo** — as is the whole library if the account itself goes private
 
 ```bash
 python3 tools/refresh.py --dry-run   # report what would change, touch nothing
@@ -62,33 +71,49 @@ python3 tools/refresh.py             # do it
 git add -A && git commit -m "Refresh videos" && git push
 ```
 
-It prints a summary of every add, removal, caption edit and profile change, or
-`(no changes)` when there's nothing to do.
+It prints a summary of every add, removal, caption edit, count change and
+profile change, or `(no changes)` when there's nothing to do. A run that finds
+nothing new writes no files at all, so it never produces an empty commit.
 
 | Flag | Effect |
 | --- | --- |
 | `--dry-run` | Report changes without writing or deleting anything |
 | `--no-prune` | Keep files for videos that vanished |
+| `--refetch` | Redownload every clip, even ones that look fine |
 | `--force` | Override the safety checks below |
 
-A GitHub Action (`.github/workflows/refresh.yml`) runs this weekly and can be
-triggered by hand from the **Actions** tab.
+A GitHub Action (`.github/workflows/refresh.yml`) runs this **every two hours**
+and can be triggered by hand from the **Actions** tab.
 
 ### Safety checks
 
-Deleting files based on a scrape means a bad scrape could empty the site, so
-three things are refused unless you pass `--force`:
+Deleting files based on a scrape means a bad scrape could empty the site, so the
+script never removes anything it hasn't confirmed. Every id it already knows
+about is looked up individually, and there's a difference between TikTok saying
+a video is gone and TikTok not answering at all — only the first one deletes.
+An id that falls off the embed feed while its own page still loads fine stays on
+the site.
 
-1. **An empty video list.** Far more likely to be TikTok blocking the request
-   than an account that deleted everything.
+On top of that, three things are refused unless you pass `--force`:
+
+1. **An empty video list**, when it can't be corroborated. Far more likely to be
+   TikTok blocking the request than an account that deleted everything. If every
+   known video's page loads and each one says the video is gone, the catalogue
+   is emptied — that's a real empty account, not a blocked scrape.
 2. **A partial list.** The embed feed is truncated for larger accounts — it
    returns 10 videos for an account with 1489 — so the scrape is compared
-   against the account's own video count and pruning is skipped when it comes
-   up short. Without this, pointing the script at a big account would delete
-   almost the whole library on the first run.
+   against the account's own video count. When it comes up short, files are
+   still deleted for videos confirmed non-public, but the general sweep for
+   orphaned files is skipped: an orphan a truncated feed can't explain might
+   belong to a video that's still up.
 3. **A username mismatch.** If `data/videos.json` holds a different account
    than the one requested, the run stops. Repointing the site is legitimate,
    but a typo looks identical up to that moment and would wipe the library.
+
+One limitation worth knowing: only the embed feed's playback URLs are fetchable
+without a session — the ones on a video's own page answer 403. So a video that
+has dropped out of the feed but is still public keeps whatever clip is already
+in the repo, and if there isn't one, its card links out to TikTok instead.
 
 To genuinely point the site at someone else:
 `python3 tools/refresh.py someothercreator --force`.

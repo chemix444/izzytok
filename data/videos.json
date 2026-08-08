@@ -2,7 +2,9 @@
   "username": "izzyontheweekends",
   "nickname": "Izzy🪩",
   "bio": "some people call me the space cowboy",
+  "verified": false,
   "followers": 152,
+  "following": 197,
   "likes": 1714,
   "avatar": "assets/avatar.jpg",
   "videos": [
@@ -14,9 +16,24 @@
         "trio",
         "bestbrosforlife"
       ],
-      "playCount": 126,
+      "mentions": [
+        "0.kc.8",
+        "mystixspine1"
+      ],
+      "created": 1786169570,
+      "duration": 8,
+      "playCount": 128,
+      "likeCount": 24,
+      "commentCount": 18,
+      "shareCount": 3,
+      "saveCount": 0,
       "width": 720,
       "height": 960,
+      "music": {
+        "title": "som original",
+        "author": "sirius",
+        "original": true
+      },
       "thumb": "assets/thumbs/7671539835626114335.jpg",
       "clip": "assets/video/7671539835626114335.mp4",
       "url": "https://www.tiktok.com/@izzyontheweekends/video/7671539835626114335"
@@ -27,9 +44,21 @@
       "hashtags": [
         "graduated"
       ],
+      "mentions": [],
+      "created": 1780544918,
+      "duration": 9,
       "playCount": 744,
+      "likeCount": 70,
+      "commentCount": 22,
+      "shareCount": 5,
+      "saveCount": 1,
       "width": 720,
       "height": 960,
+      "music": {
+        "title": "original sound",
+        "author": "໊",
+        "original": true
+      },
       "thumb": "assets/thumbs/7647382122423946527.jpg",
       "clip": "assets/video/7647382122423946527.mp4",
       "url": "https://www.tiktok.com/@izzyontheweekends/video/7647382122423946527"
@@ -40,9 +69,21 @@
       "hashtags": [
         "viral"
       ],
+      "mentions": [],
+      "created": 1771384454,
+      "duration": 11,
       "playCount": 968,
+      "likeCount": 97,
+      "commentCount": 40,
+      "shareCount": 2,
+      "saveCount": 5,
       "width": 720,
       "height": 1280,
+      "music": {
+        "title": "Breathe (In the Air)",
+        "author": "Pink Floyd",
+        "original": false
+      },
       "thumb": "assets/thumbs/7608038211490794783.jpg",
       "clip": "assets/video/7608038211490794783.mp4",
       "url": "https://www.tiktok.com/@izzyontheweekends/video/7608038211490794783"
@@ -53,9 +94,21 @@
       "hashtags": [
         "viral"
       ],
+      "mentions": [],
+      "created": 1767409711,
+      "duration": 8,
       "playCount": 1316,
+      "likeCount": 60,
+      "commentCount": 17,
+      "shareCount": 1,
+      "saveCount": 1,
       "width": 576,
       "height": 1024,
+      "music": {
+        "title": "original sound",
+        "author": "slushyeditszs",
+        "original": true
+      },
       "thumb": "assets/thumbs/7590966830815087903.jpg",
       "clip": "assets/video/7590966830815087903.mp4",
       "url": "https://www.tiktok.com/@izzyontheweekends/video/7590966830815087903"
