@@ -7,7 +7,6 @@
   --pink: #fe2c55;
   --cyan: #25f4ee;
   --rail-w: 268px;
-  --card-w: 340px;
 }
 
 * { box-sizing: border-box; }
@@ -200,38 +199,117 @@ main {
   padding: 20px;
 }
 
-/* embed.js decides the player's height and talks to the iframe to resize it,
-   so this container only fixes the width and otherwise gets out of the way —
-   no fixed height, and no overflow clipping that would crop the controls */
+/* sized from the height so the video fills tall screens; width follows 9:16 */
 .player {
   position: relative;
-  width: var(--card-w);
-  flex: 0 0 var(--card-w);
-  min-width: 325px;
-}
-
-.player .tiktok-embed {
-  margin: 0;
+  flex: none;
+  height: min(calc(100vh - 40px), 860px);
+  aspect-ratio: 9 / 16;
   border-radius: 14px;
   overflow: hidden;
   background: #000;
   box-shadow: 0 22px 60px #000000a6;
 }
 
-/* what the blockquote looks like in the gap before embed.js replaces it */
-.player .tiktok-embed > section {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  justify-content: flex-end;
-  min-height: 480px;
-  padding: 18px;
-  color: var(--muted);
-  font-size: 14px;
+.player video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: #000;
 }
-.player .tiktok-embed > section a { font-weight: 700; }
 
-.player iframe { border: 0; }
+/* full-bleed hit target for play/pause, sitting under the sound button */
+.tap {
+  position: absolute;
+  inset: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+/* the play glyph only shows while paused */
+.tap::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 66px;
+  height: 66px;
+  transform: translate(-50%, -50%) scale(.85);
+  border-radius: 50%;
+  background: #000000a6 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M8 5.5v13l11-6.5z' fill='%23fff'/%3E%3C/svg%3E") center / 32px no-repeat;
+  opacity: 0;
+  transition: opacity .18s, transform .18s;
+  pointer-events: none;
+}
+.card.is-paused .tap::after { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+
+.sound {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: #000000a6;
+  color: #fff;
+  cursor: pointer;
+  backdrop-filter: blur(4px);
+  transition: background .15s;
+}
+.sound:hover { background: #000000d6; }
+.sound svg {
+  width: 19px;
+  height: 19px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.bar {
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 3px;
+  background: #ffffff29;
+}
+.bar span {
+  display: block;
+  width: 0;
+  height: 100%;
+  background: var(--pink);
+}
+
+/* shown when a clip failed to download — link out rather than dead-end */
+.missing {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  text-decoration: none;
+  font-weight: 700;
+}
+.missing img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: .45;
+}
+.missing span {
+  position: relative;
+  padding: 9px 15px;
+  border-radius: 999px;
+  background: #000000b8;
+}
 
 /* ---------- caption rail beside the player ---------- */
 
@@ -438,7 +516,7 @@ main {
     gap: 14px;
     padding: 22px 16px;
   }
-  .player { width: min(100%, 340px); flex: none; }
+  .player { width: min(100%, 340px); height: auto; flex: none; }
   .meta { width: min(100%, 340px); align-self: center; padding-bottom: 0; }
 
   .hint, .counter { display: none; }

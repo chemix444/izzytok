@@ -2,12 +2,12 @@
 """Refresh the izzytok video catalogue.
 
 Reads TikTok's public creator-embed page for a single account, extracts the
-video list, and writes data/videos.json plus local copies of every cover image
-and the profile avatar.
+video list, and writes data/videos.json plus local copies of every video, its
+cover image, and the profile avatar.
 
-Covers have to be downloaded rather than hotlinked: TikTok's CDN URLs are
-signed and expire roughly a day after they are issued, so a static site that
-linked to them straight would show broken thumbnails by tomorrow.
+Everything is downloaded rather than hotlinked: TikTok's CDN URLs are signed
+and expire roughly a day after they are issued, so a static site that linked to
+them straight would break by tomorrow.
 
 Usage:  python3 tools/refresh.py [username]
 """
@@ -22,6 +22,7 @@ USERNAME = sys.argv[1] if len(sys.argv) > 1 else "izzyontheweekends"
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 THUMBS = ROOT / "assets" / "thumbs"
+CLIPS = ROOT / "assets" / "video"
 DATA = ROOT / "data" / "videos.json"
 
 UA = (
@@ -53,6 +54,22 @@ def scrape(username):
     return page["userInfo"], page["videoList"]
 
 
+def profile_avatar(username):
+    """Full-resolution avatar, which only the profile page exposes."""
+    try:
+        html = get(f"https://www.tiktok.com/@{username}").decode("utf-8", "replace")
+        blob = re.search(
+            r'<script id="__UNIVERSAL_DATA_FOR_REHYDRATION__" type="application/json">(.*?)</script>',
+            html,
+            re.S,
+        )
+        scope = json.loads(blob.group(1))["__DEFAULT_SCOPE__"]
+        return scope["webapp.user-detail"]["userInfo"]["user"]["avatarLarger"]
+    except Exception as exc:
+        print(f"  ! full-size avatar unavailable: {exc}")
+        return None
+
+
 def download(url, dest):
     try:
         dest.write_bytes(get(url, referer="https://www.tiktok.com/"))
@@ -65,14 +82,16 @@ def download(url, dest):
 def main():
     user, videos = scrape(USERNAME)
     THUMBS.mkdir(parents=True, exist_ok=True)
+    CLIPS.mkdir(parents=True, exist_ok=True)
     print(f"{USERNAME}: {len(videos)} videos")
 
-    if avatar := user.get("avatarThumbUrl") or user.get("avatarUrl"):
-        # the embed hands back a 100px avatar; ask for the retina crop first
-        big = avatar.replace("cropcenter:100:100", "cropcenter:720:720")
-        dest = ROOT / "assets" / "avatar.jpg"
-        if big == avatar or not download(big, dest):
-            download(avatar, dest)
+    # The embed only carries a 100px avatar, and its URL can't be resized —
+    # TikTok's signature covers the path, so a rewritten one 403s. The full-size
+    # image lives on the profile page instead; fall back if that's unreachable.
+    avatars = [a for a in (profile_avatar(USERNAME), user.get("avatarThumbUrl")) if a]
+    for candidate in avatars:
+        if download(candidate, ROOT / "assets" / "avatar.jpg"):
+            break
 
     entries = []
     for video in videos:
@@ -82,6 +101,19 @@ def main():
         cover = video.get("originCoverUrl") or video.get("coverUrl")
         if not cover or not download(cover, THUMBS / f"{vid}.jpg"):
             thumb = None
+
+        # keep an already-downloaded clip rather than refetching it every run;
+        # the signed playAddr changes on every scrape but the video does not
+        clip = f"assets/video/{vid}.mp4"
+        dest = CLIPS / f"{vid}.mp4"
+        size = dest.stat().st_size if dest.exists() else 0
+        if not size:
+            play = video.get("playAddr")
+            if not play or not download(play, dest):
+                clip = None
+            else:
+                size = dest.stat().st_size
+
         entries.append(
             {
                 "id": vid,
@@ -91,10 +123,11 @@ def main():
                 "width": video.get("width"),
                 "height": video.get("height"),
                 "thumb": thumb,
+                "clip": clip,
                 "url": f"https://www.tiktok.com/@{USERNAME}/video/{vid}",
             }
         )
-        print(f"  {vid}  {desc[:56]}")
+        print(f"  {vid}  {size / 1048576:5.2f} MB  {desc[:44]}")
 
     payload = {
         "username": USERNAME,

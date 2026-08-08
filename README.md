@@ -15,33 +15,35 @@ time**:
 
 1. `tools/refresh.py` reads TikTok's public creator-embed page for the account
    and pulls the video list out of it (id, description, play count, cover).
-2. It writes `data/videos.json` and downloads every cover image into
-   `assets/thumbs/`.
-3. The page fetches that JSON and renders the UI.
-4. Playback goes through TikTok's supported embed: the feed renders
-   `<blockquote class="tiktok-embed">` elements and then loads
-   `tiktok.com/embed.js`, which swaps each one for a real player.
+2. It downloads every cover into `assets/thumbs/` and every video into
+   `assets/video/<id>.mp4`.
+3. It writes the catalogue to `data/videos.json`.
+4. The page fetches that JSON, renders the UI, and plays the clips in plain
+   `<video>` elements.
 
-Covers are **downloaded rather than hotlinked** on purpose: TikTok's CDN URLs
-are signed and expire about a day after they're issued, so linking to them
-directly would leave the site full of broken thumbnails by tomorrow. Nothing is
-rehosted except the still images — the videos themselves always play from
-TikTok, so views and attribution stay with the creator.
+Nothing is hotlinked, because TikTok's CDN URLs are signed and expire about a
+day after they're issued — linking to them directly would leave the site broken
+by tomorrow.
 
-### Two things to know about the embed
+### Why the videos are self-hosted
 
-`embed.js` only scans the document at load time and has no observer for
-blockquotes added afterwards, so the script tag is appended *after* the feed is
-in the DOM. That also means every player mounts at once instead of lazily —
-fine for four videos, but laziness has to come back if this grows.
+TikTok's own embed was tried first, both the bare `/embed/v2/<id>` iframe and
+the supported `blockquote` + `embed.js` route. Neither plays in Firefox or on
+iOS Safari: the player sets `ttwid` as a **third-party cookie**
+(`SameSite=None`), which iOS Safari blocks outright and Firefox partitions
+under Total Cookie Protection. The player renders but the video never starts,
+and that's inside TikTok's code — not fixable from this side.
 
-More importantly, the player sets `ttwid` as a **third-party cookie**
-(`SameSite=None`). Safari on iOS blocks those outright, and Firefox partitions
-them under Total Cookie Protection, which can leave the player visible but
-unable to start the video. That's inside TikTok's player and can't be fixed
-from this side. Every card carries an **Open on TikTok** link for exactly that
-case; if in-page playback in those browsers matters more than keeping views on
-TikTok, the alternative is self-hosting the MP4s in a `<video>` element.
+Serving the MP4s ourselves sidesteps it completely. All four are H.264/AAC with
+the `moov` atom ahead of `mdat`, so they stream immediately everywhere. The
+tradeoffs, worth being clear about: the videos are **rehosted** rather than
+played from TikTok, and **TikTok no longer counts these views**. Every card
+still links back to the original post. Don't do this with an account whose
+owner hasn't agreed to it.
+
+The whole library is 2.9 MB, so it lives in the repo. If it ever grows past a
+few dozen clips, that stops being reasonable and the files belong somewhere
+else.
 
 ## Refreshing
 
@@ -73,9 +75,9 @@ the page `fetch`es `data/videos.json`.
 ```
 index.html          markup
 styles.css          all styling
-app.js              rendering, lazy embed mounting, keyboard nav
+app.js              rendering, playback, keyboard nav
 data/videos.json    the baked-in catalogue
-assets/             avatar + cover thumbnails
+assets/             avatar, cover thumbnails, and the MP4s
 tools/refresh.py    regenerates data/ and assets/
 ```
 
@@ -85,8 +87,12 @@ tools/refresh.py    regenerates data/ and assets/
 | --- | --- |
 | <kbd>↓</kbd> / <kbd>J</kbd> | Next video |
 | <kbd>↑</kbd> / <kbd>K</kbd> | Previous video |
+| <kbd>Space</kbd> | Play / pause |
+| <kbd>M</kbd> | Mute / unmute |
 
 ## Notes
 
-Unofficial fan project, not affiliated with TikTok or ByteDance. It displays
-public content from a single public account through TikTok's own embed player.
+Unofficial fan project, not affiliated with TikTok or ByteDance. It mirrors
+public content from a single public account and links back to every original
+post. Because it rehosts video rather than embedding it, only point it at an
+account whose owner is happy for you to do that.

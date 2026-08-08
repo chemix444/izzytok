@@ -3,7 +3,7 @@
   "nickname": "Izzy🪩",
   "bio": "some people call me the space cowboy",
   "followers": 152,
-  "likes": 1694,
+  "likes": 1696,
   "avatar": "assets/avatar.jpg",
   "videos": [
     {
@@ -14,10 +14,11 @@
         "trio",
         "bestbrosforlife"
       ],
-      "playCount": 37,
+      "playCount": 39,
       "width": 720,
       "height": 960,
       "thumb": "assets/thumbs/7671539835626114335.jpg",
+      "clip": "assets/video/7671539835626114335.mp4",
       "url": "https://www.tiktok.com/@izzyontheweekends/video/7671539835626114335"
     },
     {
@@ -30,6 +31,7 @@
       "width": 720,
       "height": 960,
       "thumb": "assets/thumbs/7647382122423946527.jpg",
+      "clip": "assets/video/7647382122423946527.mp4",
       "url": "https://www.tiktok.com/@izzyontheweekends/video/7647382122423946527"
     },
     {
@@ -42,6 +44,7 @@
       "width": 720,
       "height": 1280,
       "thumb": "assets/thumbs/7608038211490794783.jpg",
+      "clip": "assets/video/7608038211490794783.mp4",
       "url": "https://www.tiktok.com/@izzyontheweekends/video/7608038211490794783"
     },
     {
@@ -54,6 +57,7 @@
       "width": 576,
       "height": 1024,
       "thumb": "assets/thumbs/7590966830815087903.jpg",
+      "clip": "assets/video/7590966830815087903.mp4",
       "url": "https://www.tiktok.com/@izzyontheweekends/video/7590966830815087903"
     }
   ]
