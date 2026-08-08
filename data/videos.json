@@ -1,0 +1,60 @@
+{
+  "username": "izzyontheweekends",
+  "nickname": "Izzy🪩",
+  "bio": "some people call me the space cowboy",
+  "followers": 152,
+  "likes": 1694,
+  "avatar": "assets/avatar.jpg",
+  "videos": [
+    {
+      "id": "7671539835626114335",
+      "desc": "@⃟ @mystixspine these r my friends. #friendship #trio #bestbrosforlife",
+      "hashtags": [
+        "friendship",
+        "trio",
+        "bestbrosforlife"
+      ],
+      "playCount": 37,
+      "width": 720,
+      "height": 960,
+      "thumb": "assets/thumbs/7671539835626114335.jpg",
+      "url": "https://www.tiktok.com/@izzyontheweekends/video/7671539835626114335"
+    },
+    {
+      "id": "7647382122423946527",
+      "desc": "You’re on your own kid!!! #graduated",
+      "hashtags": [
+        "graduated"
+      ],
+      "playCount": 740,
+      "width": 720,
+      "height": 960,
+      "thumb": "assets/thumbs/7647382122423946527.jpg",
+      "url": "https://www.tiktok.com/@izzyontheweekends/video/7647382122423946527"
+    },
+    {
+      "id": "7608038211490794783",
+      "desc": "hi #viral",
+      "hashtags": [
+        "viral"
+      ],
+      "playCount": 964,
+      "width": 720,
+      "height": 1280,
+      "thumb": "assets/thumbs/7608038211490794783.jpg",
+      "url": "https://www.tiktok.com/@izzyontheweekends/video/7608038211490794783"
+    },
+    {
+      "id": "7590966830815087903",
+      "desc": "U just got weezered #viral",
+      "hashtags": [
+        "viral"
+      ],
+      "playCount": 1313,
+      "width": 576,
+      "height": 1024,
+      "thumb": "assets/thumbs/7590966830815087903.jpg",
+      "url": "https://www.tiktok.com/@izzyontheweekends/video/7590966830815087903"
+    }
+  ]
+}

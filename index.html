@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>izzytok</title>
+<meta name="description" content="A tiny custom TikTok frontend that only ever shows videos from @izzyontheweekends.">
+<meta name="theme-color" content="#0b0b10">
+<link rel="icon" href="assets/avatar.jpg">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<a class="skip" href="#feed">Skip to videos</a>
+
+<aside class="rail">
+  <h1 class="wordmark"><span>izzy</span>tok</h1>
+
+  <nav class="nav" aria-label="Views">
+    <button class="nav-btn is-active" data-view="feed" aria-pressed="true">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v14H4z"/><path d="M10 9l5 3-5 3z" class="fill"/></svg>
+      For You
+    </button>
+    <button class="nav-btn" data-view="grid" aria-pressed="false">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z"/></svg>
+      Grid
+    </button>
+  </nav>
+
+  <section class="profile" aria-label="Creator">
+    <img class="avatar" id="avatar" alt="" width="56" height="56">
+    <div class="profile-text">
+      <p class="nickname" id="nickname"></p>
+      <p class="handle" id="handle"></p>
+    </div>
+  </section>
+  <p class="bio" id="bio"></p>
+  <dl class="stats" id="stats"></dl>
+
+  <a class="follow" id="follow" href="#" target="_blank" rel="noopener">Open on TikTok</a>
+
+  <p class="disclaimer">Unofficial fan page. Videos play through TikTok's own
+  embedded player &mdash; nothing here is rehosted.</p>
+</aside>
+
+<main>
+  <section id="feed" class="feed" aria-label="Video feed"></section>
+
+  <section id="grid" class="grid" aria-label="All videos" hidden></section>
+
+  <p id="empty" class="empty" hidden>
+    Couldn't load the video list. Try a refresh, or
+    <a href="https://www.tiktok.com/@izzyontheweekends" target="_blank" rel="noopener">watch on TikTok</a>.
+  </p>
+</main>
+
+<div class="hint" id="hint" aria-hidden="true">Use <kbd>&uarr;</kbd> <kbd>&darr;</kbd> to move between videos</div>
+
+<script src="app.js"></script>
+</body>
+</html>
