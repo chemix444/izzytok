@@ -25,10 +25,12 @@ jobs:
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          if git diff --quiet; then
-            echo "No new videos."
+          git add -A
+          # --porcelain over `git diff`, which misses newly downloaded clips
+          # because they're untracked until they're staged
+          if [ -z "$(git status --porcelain)" ]; then
+            echo "Nothing changed."
             exit 0
           fi
-          git add -A
           git commit -m "Refresh videos"
           git push

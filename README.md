@@ -47,19 +47,51 @@ else.
 
 ## Refreshing
 
-New videos won't appear on their own. Re-run the scraper and commit:
+`refresh.py` reconciles the whole site with the account's current public state,
+in both directions:
+
+* new videos are downloaded, along with their covers
+* captions, hashtags and play counts are rewritten
+* the avatar, nickname, bio, follower and like counts are refreshed
+* videos that were deleted or made private are dropped from the catalogue **and
+  their files are deleted from the repo**
 
 ```bash
-python3 tools/refresh.py
+python3 tools/refresh.py --dry-run   # report what would change, touch nothing
+python3 tools/refresh.py             # do it
 git add -A && git commit -m "Refresh videos" && git push
 ```
 
-A GitHub Action (`.github/workflows/refresh.yml`) does this automatically once a
-week, and can be triggered by hand from the **Actions** tab. It's harmless if it
-fails — the committed data keeps working.
+It prints a summary of every add, removal, caption edit and profile change, or
+`(no changes)` when there's nothing to do.
 
-To point the site at a different account, pass a username:
-`python3 tools/refresh.py someothercreator`.
+| Flag | Effect |
+| --- | --- |
+| `--dry-run` | Report changes without writing or deleting anything |
+| `--no-prune` | Keep files for videos that vanished |
+| `--force` | Override the safety checks below |
+
+A GitHub Action (`.github/workflows/refresh.yml`) runs this weekly and can be
+triggered by hand from the **Actions** tab.
+
+### Safety checks
+
+Deleting files based on a scrape means a bad scrape could empty the site, so
+three things are refused unless you pass `--force`:
+
+1. **An empty video list.** Far more likely to be TikTok blocking the request
+   than an account that deleted everything.
+2. **A partial list.** The embed feed is truncated for larger accounts — it
+   returns 10 videos for an account with 1489 — so the scrape is compared
+   against the account's own video count and pruning is skipped when it comes
+   up short. Without this, pointing the script at a big account would delete
+   almost the whole library on the first run.
+3. **A username mismatch.** If `data/videos.json` holds a different account
+   than the one requested, the run stops. Repointing the site is legitimate,
+   but a typo looks identical up to that moment and would wipe the library.
+
+To genuinely point the site at someone else:
+`python3 tools/refresh.py someothercreator --force`.
 
 ## Running locally
 
