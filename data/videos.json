@@ -4,8 +4,8 @@
   "bio": "some people call me the space cowboy",
   "verified": false,
   "followers": 156,
-  "following": 197,
-  "likes": 1726,
+  "following": 198,
+  "likes": 1727,
   "avatar": "assets/avatar.jpg",
   "videos": [
     {
@@ -22,8 +22,8 @@
       ],
       "created": 1786169570,
       "duration": 8,
-      "playCount": 252,
-      "likeCount": 36,
+      "playCount": 255,
+      "likeCount": 37,
       "commentCount": 23,
       "shareCount": 3,
       "saveCount": 1,
